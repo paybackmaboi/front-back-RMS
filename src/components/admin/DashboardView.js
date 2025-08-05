@@ -54,91 +54,248 @@ const processStudentData = (students) => {
   return stats;
 };
 
-
 function DashboardView({ enrolledStudents }) {
   const statistics = processStudentData(enrolledStudents);
 
   const departmentColors = {
-    'College of Computer Studies': 'bg-primary',
-    'College of Business Administration': 'bg-success',
-    'College of Education': 'bg-info',
-    'College of Architecture': 'bg-warning text-dark',
-    'Other': 'bg-secondary'
+    'College of Computer Studies': {
+      primary: '#3B82F6',
+      secondary: '#DBEAFE',
+      gradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      icon: 'fas fa-laptop-code'
+    },
+    'College of Business Administration': {
+      primary: '#10B981',
+      secondary: '#D1FAE5',
+      gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      icon: 'fas fa-chart-line'
+    },
+    'College of Education': {
+      primary: '#8B5CF6',
+      secondary: '#EDE9FE',
+      gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+      icon: 'fas fa-graduation-cap'
+    },
+    'College of Architecture': {
+      primary: '#F59E0B',
+      secondary: '#FEF3C7',
+      gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+      icon: 'fas fa-drafting-compass'
+    },
+    'Other': {
+      primary: '#6B7280',
+      secondary: '#F3F4F6',
+      gradient: 'linear-gradient(135deg, #6B7280 0%, #4B5563 100%)',
+      icon: 'fas fa-users'
+    }
   };
 
-  return (
-    // FIX: Added a container to manage the dashboard layout and scrolling
-    <div className="dashboard-view-container">
-      {/* This is the non-scrolling header section */}
-      <div className="dashboard-header">
-        <h2 className="mb-4">Enrollment Dashboard</h2>
+  const totalEnrolled = Object.values(statistics).reduce((sum, dept) => sum + dept.total, 0);
+  const totalDepartments = Object.keys(statistics).length;
 
-        {/* Overall Statistics Cards */}
-        <div className="row mb-4">
-          {Object.keys(statistics).length > 0 ? (
-            Object.keys(statistics).map(department => (
-              <div className="col-md-6 col-xl-3 mb-4" key={department}>
-                <div className={`card text-white h-100 ${departmentColors[department] || 'bg-dark'}`}>
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-start">
-                      <div>
-                        <h5 className="card-title mb-0">{department}</h5>
-                        <small>Total Enrolled</small>
-                      </div>
-                      <div className="display-4 fw-bold">
-                        {statistics[department].total}
-                      </div>
+  return (
+    <div className="dashboard-view-container">
+      {/* Header Section */}
+      <div className="dashboard-header">
+        <div className="dashboard-title-section">
+          <div className="title-wrapper">
+            <h1 className="dashboard-title">Enrollment Analytics</h1>
+            <div className="title-badge">
+              <i className="fas fa-chart-line"></i>
+              <span>Live Dashboard</span>
+            </div>
+          </div>
+          <p className="dashboard-subtitle">Real-time insights into student enrollment patterns and academic distribution</p>
+        </div>
+
+        {/* Key Metrics Overview */}
+        <div className="metrics-overview">
+          <div className="row g-4">
+            {/* Total Students Card */}
+            <div className="col-lg-3 col-md-6">
+              <div className="metric-card primary-metric">
+                <div className="metric-card-background"></div>
+                <div className="metric-card-content">
+                  <div className="metric-icon-wrapper">
+                    <i className="fas fa-users"></i>
+                  </div>
+                  <div className="metric-details">
+                    <h3 className="metric-number">{totalEnrolled}</h3>
+                    <p className="metric-label">Total Enrolled</p>
+                    <div className="metric-trend">
+                      <i className="fas fa-arrow-up"></i>
+                      <span>Active Students</span>
                     </div>
                   </div>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="col-12">
-              <div className="alert alert-info">No students have been enrolled yet to display statistics.</div>
             </div>
-          )}
-        </div>
-        <h4 className="mb-3">Detailed Breakdown by Course</h4>
-      </div>
 
-      {/* FIX: This container will hold the scrollable detailed breakdown */}
-      <div className="dashboard-details-container">
-        <div className="row">
-          {Object.keys(statistics).map(department => (
-              Object.keys(statistics[department].courses).map(course => (
-                <div className="col-md-6 col-lg-4 mb-4" key={course}>
-                  <div className="card h-100">
-                    <div className="card-header">
-                      <h5 className="mb-0">{course}</h5>
-                      <small className="text-muted">{department}</small>
-                    </div>
-                    <div className="card-body">
-                      {Object.keys(statistics[department].courses[course]).map(yearLevel => (
-                        <div key={yearLevel}>
-                          <h6 className="card-title">{yearLevel}</h6>
-                          <ul className="list-group list-group-flush">
-                            <li className="list-group-item d-flex justify-content-between align-items-center">
-                              Total Students
-                              <span className="badge bg-primary rounded-pill">{statistics[department].courses[course][yearLevel].total}</span>
-                            </li>
-                            <li className="list-group-item d-flex justify-content-between align-items-center">
-                              Male
-                              <span className="badge bg-light text-dark rounded-pill">{statistics[department].courses[course][yearLevel].male}</span>
-                            </li>
-                            <li className="list-group-item d-flex justify-content-between align-items-center">
-                              Female
-                              <span className="badge bg-light text-dark rounded-pill">{statistics[department].courses[course][yearLevel].female}</span>
-                            </li>
-                          </ul>
+            {/* Department Cards */}
+            {Object.keys(statistics).map(department => {
+              const colorScheme = departmentColors[department] || departmentColors['Other'];
+              return (
+                <div className="col-lg-3 col-md-6" key={department}>
+                  <div className="metric-card department-metric" style={{ '--accent-color': colorScheme.primary }}>
+                    <div className="metric-card-content">
+                      <div className="metric-icon-wrapper" style={{ backgroundColor: colorScheme.secondary, color: colorScheme.primary }}>
+                        <i className={colorScheme.icon}></i>
+                      </div>
+                      <div className="metric-details">
+                        <h3 className="metric-number">{statistics[department].total}</h3>
+                        <p className="metric-label">{department}</p>
+                        <div className="metric-percentage">
+                          <span>{((statistics[department].total / totalEnrolled) * 100).toFixed(1)}%</span>
+                          <span>of total</span>
                         </div>
-                      ))}
+                      </div>
                     </div>
                   </div>
                 </div>
-              ))
-          ))}
+              );
+            })}
+          </div>
         </div>
+      </div>
+
+      {/* Detailed Analytics Section */}
+      <div className="dashboard-details-container">
+        <div className="analytics-header">
+          <div className="analytics-title-section">
+            <h2 className="analytics-title">Course Analytics</h2>
+            <p className="analytics-subtitle">Detailed breakdown by program and demographic distribution</p>
+          </div>
+          <div className="analytics-controls">
+            <div className="view-toggle">
+              <button className="toggle-btn active">
+                <i className="fas fa-th-large"></i>
+                <span>Grid View</span>
+              </button>
+              <button className="toggle-btn">
+                <i className="fas fa-list"></i>
+                <span>List View</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="analytics-grid">
+          {Object.keys(statistics).map(department => {
+            const colorScheme = departmentColors[department] || departmentColors['Other'];
+            return (
+              Object.keys(statistics[department].courses).map(course => (
+                <div className="analytics-card" key={course}>
+                  <div className="card-header-section" style={{ background: colorScheme.gradient }}>
+                    <div className="header-content">
+                      <div className="course-info">
+                        <h5 className="course-name">{course}</h5>
+                        <span className="department-tag" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+                          {department}
+                        </span>
+                      </div>
+                      <div className="header-icon">
+                        <i className={colorScheme.icon}></i>
+                      </div>
+                    </div>
+                    <div className="enrollment-summary">
+                      <div className="summary-item">
+                        <span className="summary-number">
+                          {Object.values(statistics[department].courses[course]).reduce((sum, year) => sum + year.total, 0)}
+                        </span>
+                        <span className="summary-label">Total Students</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="card-body-section">
+                    {Object.keys(statistics[department].courses[course]).map(yearLevel => (
+                      <div key={yearLevel} className="year-analytics">
+                        <div className="year-header">
+                          <h6 className="year-title">{yearLevel}</h6>
+                          <div className="year-stats">
+                            <span className="stat-badge total">
+                              {statistics[department].courses[course][yearLevel].total} Total
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="demographics-grid">
+                          <div className="demo-item male">
+                            <div className="demo-icon">
+                              <i className="fas fa-male"></i>
+                            </div>
+                            <div className="demo-content">
+                              <span className="demo-number">{statistics[department].courses[course][yearLevel].male}</span>
+                              <span className="demo-label">Male</span>
+                            </div>
+                            <div className="demo-percentage">
+                              {statistics[department].courses[course][yearLevel].total > 0 ? 
+                                ((statistics[department].courses[course][yearLevel].male / statistics[department].courses[course][yearLevel].total) * 100).toFixed(1) : 0}%
+                            </div>
+                          </div>
+                          
+                          <div className="demo-item female">
+                            <div className="demo-icon">
+                              <i className="fas fa-female"></i>
+                            </div>
+                            <div className="demo-content">
+                              <span className="demo-number">{statistics[department].courses[course][yearLevel].female}</span>
+                              <span className="demo-label">Female</span>
+                            </div>
+                            <div className="demo-percentage">
+                              {statistics[department].courses[course][yearLevel].total > 0 ? 
+                                ((statistics[department].courses[course][yearLevel].female / statistics[department].courses[course][yearLevel].total) * 100).toFixed(1) : 0}%
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="progress-section">
+                          <div className="progress-bar">
+                            <div 
+                              className="progress-fill male-fill" 
+                              style={{ 
+                                width: `${statistics[department].courses[course][yearLevel].total > 0 ? 
+                                  (statistics[department].courses[course][yearLevel].male / statistics[department].courses[course][yearLevel].total) * 100 : 0}%` 
+                              }}
+                            ></div>
+                            <div 
+                              className="progress-fill female-fill" 
+                              style={{ 
+                                width: `${statistics[department].courses[course][yearLevel].total > 0 ? 
+                                  (statistics[department].courses[course][yearLevel].female / statistics[department].courses[course][yearLevel].total) * 100 : 0}%` 
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            );
+          })}
+        </div>
+
+        {/* Empty State */}
+        {Object.keys(statistics).length === 0 && (
+          <div className="modern-empty-state">
+            <div className="empty-illustration">
+              <i className="fas fa-chart-bar"></i>
+            </div>
+            <div className="empty-content">
+              <h3 className="empty-title">No Enrollment Data Available</h3>
+              <p className="empty-description">
+                Enrollment analytics will appear here once students have been registered in the system.
+              </p>
+              <div className="empty-actions">
+                <button className="btn btn-primary">
+                  <i className="fas fa-plus"></i>
+                  Add Students
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

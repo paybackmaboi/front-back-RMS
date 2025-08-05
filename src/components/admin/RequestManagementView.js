@@ -132,7 +132,7 @@ function RequestManagementView({ setDocumentModalData }) {
                 printContent = `
                 <div class="tor-container">
                         <div class="tor-header">
-                            <img src="/bc.png" alt="Logo" class="tor-logo">
+                            <img src="/bc.png" alt="Benedicto College Logo" class="logo-print tor-logo">
                             <h2>BENEDICTO COLLEGE</h2>
                             <p>A.S. Fortuna Street, Mandaue City 6014, Cebu, Philippines</p>
                             <h3>OFFICIAL TRANSCRIPT OF RECORDS</h3>
@@ -245,7 +245,7 @@ function RequestManagementView({ setDocumentModalData }) {
                 printContent = `
                     <div class="diploma-container">
                         <div class="diploma-header">
-                            <img src="/bc.png" alt="Logo" class="diploma-logo">
+                            <img src="/bc.png" alt="Benedicto College Logo" class="logo-print diploma-logo">
                             <h1>BENEDICTO COLLEGE</h1>
                             <p class="motto">Your Education... Our Mission</p>
                             <p class="address">A.S. Fortuna Street, Bakilid, Mandaue City</p>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-// FIX: Removed 'Link' as it was not being used in this component.
 import { useParams } from 'react-router-dom';
-import { createDummySubjectSchedules } from '../../data/dummyData';
+import { API_BASE_URL, getToken } from '../../utils/api';
 
 // Helper function to generate a list of dummy students for a schedule
 const generateEnrolledStudents = (count) => {

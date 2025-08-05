@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { createDummySchoolYears, getLegacySubjects, getLegacyStudents } from '../../data/dummyData';
+import React, { useState, useEffect } from 'react';
+import { API_BASE_URL, getToken } from '../../utils/api';
 
 // This is a custom hook for simulating a searchable dropdown
 const useSearchableDropdown = (items) => {
@@ -14,9 +14,9 @@ const useSearchableDropdown = (items) => {
 };
 
 function EncodeEnrollmentView({ onEncodeStudent }) {
-    const [schoolYears] = useState(createDummySchoolYears());
-    const [allSubjects] = useState(getLegacySubjects());
-    const [legacyStudents] = useState(getLegacyStudents());
+    const [schoolYears, setSchoolYears] = useState([]);
+    const [allSubjects, setAllSubjects] = useState([]);
+    const [legacyStudents, setLegacyStudents] = useState([]);
 
     const [selectedSchoolYear, setSelectedSchoolYear] = useState('2024 - 2025 1st Semester');
     const [selectedSubject, setSelectedSubject] = useState(null);
@@ -29,6 +29,69 @@ function EncodeEnrollmentView({ onEncodeStudent }) {
     const isAdmin = userRole === 'admin';
 
     const subjectDropdown = useSearchableDropdown(allSubjects);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/school-years`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                setSchoolYears(data);
+            } catch (error) {
+                console.error("Error fetching school years:", error);
+            }
+        };
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        const fetchSubjects = async () => {
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/subjects`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                setAllSubjects(data);
+            } catch (error) {
+                console.error("Error fetching subjects:", error);
+            }
+        };
+        fetchSubjects();
+    }, []);
+
+    useEffect(() => {
+        const fetchStudents = async () => {
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/students`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                setLegacyStudents(data);
+            } catch (error) {
+                console.error("Error fetching students:", error);
+            }
+        };
+        fetchStudents();
+    }, []);
 
     const handleSelectSubject = (subject) => {
         setSelectedSubject(subject);

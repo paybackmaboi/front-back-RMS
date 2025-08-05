@@ -1,9 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { createDummyGradingData } from '../../data/dummyData';
+import { API_BASE_URL, getToken } from '../../utils/api';
 
 function ViewGradesView() {
+    const [gradingData, setGradingData] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchGradingData();
+    }, []);
+
+    const fetchGradingData = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_BASE_URL}/grades`, {
+                headers: {
+                    'Authorization': `Bearer ${getToken()}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setGradingData(data);
+            } else {
+                console.error('Failed to fetch grading data');
+                setGradingData([]);
+            }
+        } catch (error) {
+            console.error('Error fetching grading data:', error);
+            setGradingData([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // State for the entire data structure, selected teacher, and subject
-    const [gradingData] = useState(createDummyGradingData());
     const [selectedTeacherId, setSelectedTeacherId] = useState('');
     const [selectedSubjectId, setSelectedSubjectId] = useState('');
 
@@ -55,87 +86,92 @@ function ViewGradesView() {
                 <span className="text-muted fw-bold">ADMINISTRATORS / GRADES</span>
             </div>
 
-            <div className="card shadow-sm">
-                <div className="card-body">
-                    {/* Filter Dropdowns */}
-                    <div className="row g-3 mb-4">
-                        <div className="col-md-4">
-                            <label className="form-label">Select a Teacher</label>
-                            <select 
-                                className="form-select" 
-                                value={selectedTeacherId}
-                                onChange={(e) => setSelectedTeacherId(e.target.value)}
-                                // disabled={!selectedTeacherId}
-                                disabled = {!isAdmin}
-                            >
-                                <option value="">-- Select Teacher --</option>
-                                {gradingData.map(teacher => (
-                                    <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="col-md-4">
-                            <label className="form-label">Select a Subject</label>
-                            <select 
-                                className="form-select"
-                                value={selectedSubjectId}
-                                onChange={(e) => setSelectedSubjectId(e.target.value)}
-                                // disabled={!selectedTeacherId}
-                                disabled = {!isAdmin}
-                            >
-                                <option value="">--- Select Subject ---</option>
-                                {subjectsForTeacher.map(subject => (
-                                    <option key={subject.id} value={subject.id}>{subject.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="col-md-4">
-                            <label className="form-label">Select a Schedule</label>
-                            <select className="form-select" value={schedule} disabled = {!isAdmin}>
-                                <option>{schedule || '-- Select Subject First --'}</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Grades Table */}
-                    <div className="table-responsive" style={{ maxHeight: 'calc(100vh - 350px)', overflowY: 'auto' }}>
-                        <p className="text-muted">{students.length} of {students.length}</p>
-                        <table className="table table-hover">
-                            <thead className="table-light sticky-top">
-                                <tr>
-                                    <th>Student ID</th>
-                                    <th>Name</th>
-                                    <th>Prelims</th>
-                                    <th>Midterms</th>
-                                    <th>Final Midterm Grade</th>
-                                    <th>Finals</th>
-                                    <th>Final Grade</th>
-                                    {/* FIX: Removed Action header */}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {students.length > 0 ? students.map(student => (
-                                    <tr key={student.id}>
-                                        <td>{student.id}</td>
-                                        <td>{student.name}</td>
-                                        {/* FIX: Changed inputs to be read-only for viewing purposes */}
-                                        <td><input type="text" className="form-control-plaintext form-control-sm text-center" value={student.grades.prelims || '--'} readOnly /></td>
-                                        <td><input type="text" className="form-control-plaintext form-control-sm text-center" value={student.grades.midterms || '--'} readOnly /></td>
-                                        <td><input type="text" className="form-control-plaintext form-control-sm text-center" value={student.grades.finalMidterm || '--'} readOnly /></td>
-                                        <td><input type="text" className="form-control-plaintext form-control-sm text-center" value={student.grades.finals || '--'} readOnly /></td>
-                                        <td><input type="text" className="form-control-plaintext form-control-sm text-center" value={student.grades.final || '--'} readOnly /></td>
-                                    </tr>
-                                )) : (
-                                    <tr>
-                                        {/* FIX: Adjusted colSpan since Action column was removed */}
-                                        <td colSpan="7" className="text-center text-muted py-5">Please select a teacher and subject to view students.</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+            {loading ? (
+                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
                     </div>
                 </div>
-            </div>
+            ) : (
+                <div className="card shadow-sm">
+                    <div className="card-body">
+                        {/* Filter Dropdowns */}
+                        <div className="row g-3 mb-4">
+                            <div className="col-md-4">
+                                <label className="form-label">Select a Teacher</label>
+                                <select 
+                                    className="form-select" 
+                                    value={selectedTeacherId}
+                                    onChange={(e) => setSelectedTeacherId(e.target.value)}
+                                    disabled = {!isAdmin}
+                                >
+                                    <option value="">-- Select Teacher --</option>
+                                    {gradingData.map(teacher => (
+                                        <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="col-md-4">
+                                <label className="form-label">Select a Subject</label>
+                                <select 
+                                    className="form-select"
+                                    value={selectedSubjectId}
+                                    onChange={(e) => setSelectedSubjectId(e.target.value)}
+                                    disabled = {!isAdmin}
+                                >
+                                    <option value="">--- Select Subject ---</option>
+                                    {subjectsForTeacher.map(subject => (
+                                        <option key={subject.id} value={subject.id}>{subject.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="col-md-4">
+                                <label className="form-label">Select a Schedule</label>
+                                <select className="form-select" value={schedule} disabled = {!isAdmin}>
+                                    <option>{schedule || '-- Select Subject First --'}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Grades Table */}
+                        <div className="table-responsive" style={{ maxHeight: 'calc(100vh - 350px)', overflowY: 'auto' }}>
+                            <p className="text-muted">{students.length} of {students.length}</p>
+                            <table className="table table-hover">
+                                <thead className="table-light sticky-top">
+                                    <tr>
+                                        <th>Student ID</th>
+                                        <th>Name</th>
+                                        <th>Prelims</th>
+                                        <th>Midterms</th>
+                                        <th>Final Midterm Grade</th>
+                                        <th>Finals</th>
+                                        <th>Final Grade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {students.length > 0 ? students.map(student => (
+                                        <tr key={student.id}>
+                                            <td>{student.studentId}</td>
+                                            <td>{student.name}</td>
+                                            <td>{student.prelims}</td>
+                                            <td>{student.midterms}</td>
+                                            <td>{student.finalMidtermGrade}</td>
+                                            <td>{student.finals}</td>
+                                            <td>{student.finalGrade}</td>
+                                        </tr>
+                                    )) : (
+                                        <tr>
+                                            <td colSpan="7" className="text-center text-muted">
+                                                No students found. Please select a teacher and subject first.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

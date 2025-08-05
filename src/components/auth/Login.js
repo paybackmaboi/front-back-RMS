@@ -29,7 +29,9 @@ function Login({ onLoginSuccess }) {
     <div className="container mt-5">
       <div className="row align-items-center justify-content-center">
         <div className="col-md-5 d-flex justify-content-center">
-          <img src="/bcleads.png" alt="Registrar Logo" style={{ maxWidth: '850px', width: '100%', height: 'auto' }} className="mb-4" />
+          <div className="logo-container logo-container-bg">
+            <img src="/bcleads.png" alt="Benedicto College Registrar Logo" className="logo-login mb-4" />
+          </div>
         </div>
         <div className="col-md-7 d-flex justify-content-end">
           <div className="loginCard shadow-lg p-4 w-100 d-flex flex-column align-items-center" style={{ maxWidth: '400px' }}>

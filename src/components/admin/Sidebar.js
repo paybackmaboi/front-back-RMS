@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { API_BASE_URL, getToken } from '../../utils/api';
 
-
 function Sidebar({ onProfileClick, setStudentToEnroll }) {
     const location = useLocation();
     const [pendingRequestCount, setPendingRequestCount] = useState(0);
@@ -20,18 +19,30 @@ function Sidebar({ onProfileClick, setStudentToEnroll }) {
     const [selectedSchoolYear, setSelectedSchoolYear] = useState('');
 
     useEffect(() => {
-        // TODO: Replace this with your actual API call to fetch school years
+        // Fetch school years from backend
         const fetchSchoolYears = async () => {
-            // This is dummy data that mimics an API response.
-            const dummyData = [
-                { id: 1, start_year: 2025, end_year: 2026, semester: '1st Semester' },
-                { id: 2, start_year: 2024, end_year: 2025, semester: '2nd Semester' },
-                { id: 3, start_year: 2024, end_year: 2025, semester: '1st Semester' },
-            ];
-            setSchoolYears(dummyData);
-            // Set the default selected value to the most recent one
-            if (dummyData.length > 0) {
-                setSelectedSchoolYear(dummyData[0].id);
+            try {
+                const response = await fetch(`${API_BASE_URL}/school-years`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    setSchoolYears(data);
+                    // Set the default selected value to the most recent one
+                    if (data.length > 0) {
+                        setSelectedSchoolYear(data[0].id);
+                    }
+                } else {
+                    console.error('Failed to fetch school years');
+                    setSchoolYears([]);
+                }
+            } catch (error) {
+                console.error('Error fetching school years:', error);
+                setSchoolYears([]);
             }
         };
         fetchSchoolYears();
@@ -99,73 +110,36 @@ function Sidebar({ onProfileClick, setStudentToEnroll }) {
 
     const handleProfilePicChange = (e) => {
         const file = e.target.files[0];
-        if (!file) {
-            return;
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const imageData = event.target.result;
+                setProfilePic(imageData);
+                localStorage.setItem(`${userRole}ProfilePic`, imageData);
+            };
+            reader.readAsDataURL(file);
         }
-
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 200;
-                const MAX_HEIGHT = 200;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-                } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
-                }
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-
-                try {
-                    localStorage.setItem(`${userRole}ProfilePic`, dataUrl);
-                    setProfilePic(dataUrl);
-                } catch (error) {
-                    alert("Could not save the profile picture. The image might still be too large or your browser's storage is full.");
-                    console.error("Error saving profile picture to localStorage:", error);
-                }
-            };
-            img.onerror = () => {
-                alert("The selected file couldn't be loaded as an image.");
-            };
-        };
-        reader.onerror = () => {
-            alert("Failed to read the selected file.");
-        };
     };
 
     const handleMenuClick = (e, itemName) => {
         e.preventDefault();
-        if (itemName === 'Students') setStudentOpen(!isStudentOpen);
-        if (itemName === 'Registration') setRegistrationOpen(!isRegistrationOpen);
-        if (itemName === 'Enrollment') setEnrollmentOpen(!isEnrollmentOpen);
-        if (itemName === 'Assessment') setAssessmentOpen(!isAssessmentOpen);
-        if (itemName === 'Manage') setManageOpen(!isManageOpen);
+        if (itemName === 'Enrollment') {
+            setEnrollmentOpen(!isEnrollmentOpen);
+        } else if (itemName === 'Registration') {
+            setRegistrationOpen(!isRegistrationOpen);
+        } else if (itemName === 'Students') {
+            setStudentOpen(!isStudentOpen);
+        } else if (itemName === 'Manage') {
+            setManageOpen(!isManageOpen);
+        } else if (itemName === 'Assessment') {
+            setAssessmentOpen(!isAssessmentOpen);
+        }
     };
 
-     const handleSchoolYearChange = (e) => {
+    const handleSchoolYearChange = (e) => {
         setSelectedSchoolYear(e.target.value);
-        // TODO: You might want to update a global state or context here
-        // so other parts of your application know the selected SY has changed.
-        console.log("Selected School Year ID:", e.target.value);
     };
+
     const visibleMenuItems = userRole === 'accounting'
         ? menuItems.filter(item => item.name === 'Registration')
         : userRole === 'admin'
@@ -199,7 +173,7 @@ function Sidebar({ onProfileClick, setStudentToEnroll }) {
                     ))}
                 </select>
             </div>
-            
+
             <div className="sidebar-nav">
                 <ul className="nav flex-column">
                     {visibleMenuItems.map(item => (

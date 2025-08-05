@@ -1,10 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { createDummySubjectSchedules } from '../../data/dummyData';
+import { API_BASE_URL, getToken } from '../../utils/api';
 
 function SubjectSchedulesView() {
-    const [schedules] = useState(createDummySubjectSchedules());
+    const [schedules, setSchedules] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchSchedules = async () => {
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/api/schedules/`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                setSchedules(data);
+            } catch (err) {
+                setError(err);
+                console.error("Error fetching subject schedules:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSchedules();
+        const interval = setInterval(fetchSchedules, 60000); // Poll every minute
+        return () => clearInterval(interval);
+    }, []);
 
     const userRole = localStorage.getItem('userRole'); // Get current user role
     const isAccounting = userRole === 'accounting';
@@ -21,6 +52,14 @@ function SubjectSchedulesView() {
             // window.alert('Forbidden: Access is restricted to administrators.');
         }
     };
+
+    if (loading) {
+        return <div className="text-center py-5">Loading schedules...</div>;
+    }
+
+    if (error) {
+        return <div className="text-center py-5 text-danger">Error: {error.message}</div>;
+    }
 
     return (
         <div className="container-fluid">

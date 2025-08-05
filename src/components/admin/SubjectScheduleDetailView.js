@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { createDummySubjectSchedules } from '../../data/dummyData';
+import { API_BASE_URL, getToken } from '../../utils/api';
 
 // Helper function (no changes needed here)
 const generateEnrolledStudents = (count) => {
@@ -26,8 +26,43 @@ const generateEnrolledStudents = (count) => {
 
 function SubjectScheduleDetailView() {
     const { id } = useParams();
-    const schedules = createDummySubjectSchedules();
-    const schedule = schedules.find(s => s.id === parseInt(id));
+    const [schedule, setSchedule] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchSchedule = async () => {
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/api/schedules/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                setSchedule(data);
+            } catch (err) {
+                setError(err);
+                console.error("Error fetching schedule:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSchedule();
+    }, [id]);
+
+    if (loading) {
+        return <div className="detail-view-wrapper"><h2>Loading schedule...</h2></div>;
+    }
+
+    if (error) {
+        return <div className="detail-view-wrapper"><h2>Error: {error.message}</h2></div>;
+    }
 
     if (!schedule) {
         return <div className="detail-view-wrapper"><h2>Schedule not found.</h2></div>;

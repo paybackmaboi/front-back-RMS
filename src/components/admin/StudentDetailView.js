@@ -1,10 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getDummyCurriculum } from '../../data/dummyData';
+import { API_BASE_URL, getToken } from '../../utils/api';
 import CurriculumTrackModal from './CurriculumTrackModal';
 import './StudentDetailView.css';
 import './CurriculumTrackModal.css';
-import { API_BASE_URL, getToken } from '../../utils/api';
 
 function StudentDetailView({ enrolledStudents }) {
   const { idNo } = useParams();
@@ -17,27 +16,66 @@ function StudentDetailView({ enrolledStudents }) {
     const fetchStudentDetails = async () => {
       try {
         setLoading(true);
+        console.log('Looking for student with ID:', idNo);
+        console.log('Available enrolledStudents:', enrolledStudents);
+        
         const enrolledStudent = enrolledStudents.find(s => s.idNo === idNo);
         
+        console.log('Found enrolled student:', enrolledStudent);
+        
         if (!enrolledStudent) {
-          setError('Student not found');
+          console.error('Student not found in enrolledStudents array');
+          setError(`Student not found with ID: ${idNo}. Please check the student list and try again.`);
           setLoading(false);
           return;
         }
 
-        const response = await fetch(`${API_BASE_URL}/students/${enrolledStudent.id}`, {
-          headers: {
-            'Authorization': `Bearer ${getToken()}`
-          }
-        });
+        // Try to fetch from backend first
+        try {
+          console.log('Attempting to fetch from backend with student ID:', enrolledStudent.id);
+          const response = await fetch(`${API_BASE_URL}/students/${enrolledStudent.id}`, {
+            headers: {
+              'Authorization': `Bearer ${getToken()}`
+            }
+          });
 
-        if (response.ok) {
-          const studentData = await response.json();
-          console.log('Student data from backend:', studentData); // Debug log
-          console.log('Student details:', studentData.studentDetails); // Debug log for student details
-          setStudent(studentData);
-        } else {
-          setError('Failed to fetch student details');
+          if (response.ok) {
+            const studentData = await response.json();
+            console.log('Student data from backend:', studentData);
+            setStudent(studentData);
+          } else {
+            // If backend fails, use the enrolled student data
+            console.log('Backend fetch failed, using enrolled student data');
+            setStudent({
+              ...enrolledStudent,
+              studentDetails: {
+                academicStatus: enrolledStudent.status,
+                currentSemester: 1,
+                yearOfEntry: new Date().getFullYear(),
+                estimatedYearOfGraduation: new Date().getFullYear() + 4,
+                course: {
+                  name: enrolledStudent.course,
+                  curriculum: []
+                }
+              }
+            });
+          }
+        } catch (error) {
+          console.log('Network error, using enrolled student data');
+          // If network error, use the enrolled student data
+          setStudent({
+            ...enrolledStudent,
+            studentDetails: {
+              academicStatus: enrolledStudent.status,
+              currentSemester: 1,
+              yearOfEntry: new Date().getFullYear(),
+              estimatedYearOfGraduation: new Date().getFullYear() + 4,
+              course: {
+                name: enrolledStudent.course,
+                curriculum: []
+              }
+            }
+          });
         }
       } catch (error) {
         console.error('Error fetching student details:', error);
@@ -61,42 +99,29 @@ function StudentDetailView({ enrolledStudents }) {
     }
   };
 
-  const studentDetails = useMemo(() => {
-    if (!student) return null;
-    
-    return {
-      documentRequests: [],
-      enrolledSubjects: {},
-      allTakenSubjects: [],
-      curriculum: getDummyCurriculum(student.studentDetails?.course?.name || student.course),
-      academicInfo: {
-        status: student.studentDetails?.academicStatus || 'Not registered',
-        semester: `${student.studentDetails?.currentSemester || 1}${getOrdinalSuffix(student.studentDetails?.currentSemester || 1)} Semester`,
-        yearOfEntry: student.studentDetails?.yearOfEntry || 'N/A',
-        yearOfGraduation: student.studentDetails?.estimatedYearOfGraduation || 'N/A'
-      }
-    };
-  }, [student]);
+  const studentDetails = {
+    documentRequests: [],
+    enrolledSubjects: {},
+    allTakenSubjects: [],
+    curriculum: student?.studentDetails?.course?.curriculum || [],
+    academicInfo: {
+      status: student?.studentDetails?.academicStatus || 'Not registered',
+      semester: `${student?.studentDetails?.currentSemester || 1}${getOrdinalSuffix(student?.studentDetails?.currentSemester || 1)} Semester`,
+      yearOfEntry: student?.studentDetails?.yearOfEntry || 'N/A',
+      yearOfGraduation: student?.studentDetails?.estimatedYearOfGraduation || 'N/A'
+    }
+  };
 
   const [currentSemester, setCurrentSemester] = useState('');
   const [isCurriculumModalOpen, setCurriculumModalOpen] = useState(false);
 
   // FIX: Memoize currentSubjects to satisfy the exhaustive-deps rule
-  const currentSubjects = useMemo(() => studentDetails?.enrolledSubjects?.[currentSemester] || [], [studentDetails?.enrolledSubjects, currentSemester]);
+  const currentSubjects = studentDetails?.enrolledSubjects?.[currentSemester] || [];
    
-  const { totalUnits, weightedAverage } = useMemo(() => {
-    let totalUnits = 0;
-    let totalWeight = 0;
-    currentSubjects.forEach(sub => {
-      const grade = parseFloat(sub.finalGrade);
-      if (!isNaN(grade)) {
-        totalUnits += sub.units;
-        totalWeight += grade * sub.units;
-      }
-    });
-    const weightedAverage = totalUnits > 0 ? (totalWeight / totalUnits).toFixed(4) : 'N/A';
-    return { totalUnits, weightedAverage };
-  }, [currentSubjects]);
+  const { totalUnits, weightedAverage } = {
+    totalUnits: 0,
+    weightedAverage: 'N/A'
+  };
 
   if (loading) {
     return (
