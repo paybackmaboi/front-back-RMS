@@ -2,6 +2,62 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { API_BASE_URL, getToken } from '../../utils/api';
 
+// Helper function to generate dummy subject schedules
+const createDummySubjectSchedules = () => {
+    return [
+        {
+            id: 1,
+            subject: "COMP 101",
+            description: "Introduction to Computer Science",
+            days: "Monday, Wednesday, Friday",
+            time: "8:00 AM - 9:30 AM",
+            room: "Room 101",
+            teacher: "Dr. Smith",
+            enrollees: 25
+        },
+        {
+            id: 2,
+            subject: "MATH 201",
+            description: "Calculus I",
+            days: "Tuesday, Thursday",
+            time: "10:00 AM - 11:30 AM",
+            room: "Room 202",
+            teacher: "Prof. Johnson",
+            enrollees: 30
+        },
+        {
+            id: 3,
+            subject: "ENG 101",
+            description: "English Composition",
+            days: "Monday, Wednesday",
+            time: "2:00 PM - 3:30 PM",
+            room: "Room 103",
+            teacher: "Ms. Davis",
+            enrollees: 28
+        },
+        {
+            id: 4,
+            subject: "PHYS 101",
+            description: "Physics Fundamentals",
+            days: "Tuesday, Thursday, Friday",
+            time: "1:00 PM - 2:30 PM",
+            room: "Lab 301",
+            teacher: "Dr. Wilson",
+            enrollees: 22
+        },
+        {
+            id: 5,
+            subject: "HIST 101",
+            description: "World History",
+            days: "Monday, Wednesday, Friday",
+            time: "9:00 AM - 10:30 AM",
+            room: "Room 104",
+            teacher: "Prof. Brown",
+            enrollees: 35
+        }
+    ];
+};
+
 // Helper function to generate a list of dummy students for a schedule
 const generateEnrolledStudents = (count) => {
     const students = [];

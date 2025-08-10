@@ -1,5 +1,4 @@
 import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv';
 import mysql2 from 'mysql2/promise';
 
 // Import all model initializers
@@ -12,18 +11,26 @@ import { SchoolYear as SchoolYearModel, initSchoolYear } from './models/SchoolYe
 import { Semester as SemesterModel, initSemester } from './models/Semester';
 import { Schedule as ScheduleModel, initSchedule } from './models/Schedule';
 import { Enrollment as EnrollmentModel, initEnrollment } from './models/Enrollment';
+import { EnrollmentApplication as EnrollmentApplicationModel, initEnrollmentApplication } from './models/EnrollmentApplication';
 import { Grade as GradeModel, initGrade } from './models/Grade';
 import { Request as RequestModel, initRequest } from './models/Request';
 import { Notification as NotificationModel, initNotification } from './models/Notification';
 
-dotenv.config();
+// Hardcoded database configuration
+const DB_NAME = 'test_db';
+const DB_USER = 'root';
+const DB_PASSWORD = 'root';
+const DB_HOST = 'localhost';
+const DB_PORT = 3306;
+const DB_DIALECT = 'mysql';
 
-const DB_NAME = process.env.DB_NAME;
-const DB_USER = process.env.DB_USER;
-const DB_PASSWORD = process.env.DB_PASSWORD;
-const DB_HOST = process.env.DB_HOST;
-const DB_PORT = process.env.DB_PORT;
-const DB_DIALECT = process.env.DB_DIALECT || 'mysql';
+console.log('Database Configuration:');
+console.log('DB_NAME:', DB_NAME);
+console.log('DB_USER:', DB_USER);
+console.log('DB_PASSWORD:', '***');
+console.log('DB_HOST:', DB_HOST);
+console.log('DB_PORT:', DB_PORT);
+console.log('DB_DIALECT:', DB_DIALECT);
 
 export let sequelize: Sequelize;
 
@@ -33,10 +40,7 @@ export let sequelize: Sequelize;
  */
 export const connectAndInitialize = async () => {
     try {
-        // VALIDATION: Ensure all required environment variables are set for the database.
-        if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST || !DB_PORT) {
-            throw new Error('One or more database environment variables are not set.');
-        }
+        console.log('Connecting to database...');
 
         // Initialize Sequelize directly with all connection details.
         sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
@@ -56,6 +60,7 @@ export const connectAndInitialize = async () => {
         initSemester(sequelize);
         initSchedule(sequelize);
         initEnrollment(sequelize);
+        initEnrollmentApplication(sequelize);
         initGrade(sequelize);
         initRequest(sequelize);
         initNotification(sequelize);
@@ -110,6 +115,22 @@ export const connectAndInitialize = async () => {
         UserModel.hasMany(NotificationModel, { foreignKey: 'userId', as: 'notifications' });
         NotificationModel.belongsTo(UserModel, { foreignKey: 'userId', as: 'user' });
 
+        // Student -> EnrollmentApplication (One-to-Many)
+        StudentModel.hasMany(EnrollmentApplicationModel, { foreignKey: 'studentId', as: 'enrollmentApplications' });
+        EnrollmentApplicationModel.belongsTo(StudentModel, { foreignKey: 'studentId', as: 'student' });
+
+        // Course -> EnrollmentApplication (One-to-Many)
+        CourseModel.hasMany(EnrollmentApplicationModel, { foreignKey: 'courseId', as: 'enrollmentApplications' });
+        EnrollmentApplicationModel.belongsTo(CourseModel, { foreignKey: 'courseId', as: 'course' });
+
+        // User -> EnrollmentApplication (Accounting approval)
+        UserModel.hasMany(EnrollmentApplicationModel, { foreignKey: 'accountingApprovedBy', as: 'accountingApprovals' });
+        EnrollmentApplicationModel.belongsTo(UserModel, { foreignKey: 'accountingApprovedBy', as: 'accountingApprover' });
+
+        // User -> EnrollmentApplication (Registrar approval)
+        UserModel.hasMany(EnrollmentApplicationModel, { foreignKey: 'registrarApprovedBy', as: 'registrarApprovals' });
+        EnrollmentApplicationModel.belongsTo(UserModel, { foreignKey: 'registrarApprovedBy', as: 'registrarApprover' });
+
         // Authenticate the connection.
         await sequelize.authenticate();
         console.log('Sequelize has connected to the database successfully.');
@@ -138,6 +159,7 @@ export const SchoolYear = SchoolYearModel;
 export const Semester = SemesterModel;
 export const Schedule = ScheduleModel;
 export const Enrollment = EnrollmentModel;
+export const EnrollmentApplication = EnrollmentApplicationModel;
 export const Grade = GradeModel;
 export const Request = RequestModel;
 export const Notification = NotificationModel;
